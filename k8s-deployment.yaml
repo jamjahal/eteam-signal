@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sec-alpha-sentinel
+  labels:
+    app: sec-alpha-sentinel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sec-alpha-sentinel
+  template:
+    metadata:
+      labels:
+        app: sec-alpha-sentinel
+    spec:
+      containers:
+      - name: sec-alpha-sentinel
+        image: sec-alpha-sentinel:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+        env:
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: sec-alpha-secrets
+              key: anthropic-api-key
+        - name: QDRANT_HOST
+          value: "qdrant"
+        - name: QDRANT_PORT
+          value: "6333"
+        resources:
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sec-alpha-sentinel
+spec:
+  selector:
+    app: sec-alpha-sentinel
+  ports:
+  - port: 80
+    targetPort: 8000
+  type: ClusterIP
