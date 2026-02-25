@@ -26,13 +26,13 @@ SEC EDGAR ──► FilingProcessor ──► Qdrant (dense vectors)
                                         │
                                         ▼
                               ┌─────────────────┐
-                              │  AnalystAgent    │ ◄── Claude 3.5 Sonnet
+                              │  AnalystAgent    │ ◄── Claude Sonnet 4
                               │  (signal draft)  │
                               └────────┬────────┘
                                        │
                                        ▼
                               ┌─────────────────┐
-                              │  CriticAgent     │ ◄── Claude 3.5 Sonnet
+                              │  CriticAgent     │ ◄── Claude Sonnet 4
                               │  (verification)  │
                               └────────┬────────┘
                                        │
@@ -58,13 +58,13 @@ SEC EDGAR Form 4 ──► InsiderAnalyzer ──┤
 
 ## LLM(s) Used and Why
 
-### Claude 3.5 Sonnet (Anthropic) -- Reasoning
+### Claude Sonnet 4 (Anthropic) -- Reasoning
 
-All generative reasoning tasks use **Claude 3.5 Sonnet** (`claude-3-5-sonnet-20240620`), accessed through the Anthropic Python SDK via `src/services/llm_client.py`.
+All generative reasoning tasks use **Claude Sonnet 4** (`claude-sonnet-4-20250514`), accessed through the Anthropic Python SDK via `src/services/llm_client.py`. The model is configurable by setting `LLM_MODEL` in your `.env` file.
 
-Why Claude 3.5 Sonnet:
+Why Claude Sonnet:
 
-- **Structured-output compliance**: The pipeline relies on the LLM returning valid JSON matching specific schemas. Claude 3.5 Sonnet demonstrates strong adherence to JSON output instructions, reducing parse failures.
+- **Structured-output compliance**: The pipeline relies on the LLM returning valid JSON matching specific schemas. Claude Sonnet demonstrates strong adherence to JSON output instructions, reducing parse failures.
 - **Long context window**: SEC filing excerpts can be lengthy. Claude's context window accommodates multiple filing sections in a single prompt without truncation.
 - **Low hallucination rate**: The Critic agent's entire purpose is catching fabricated quotes and unsupported claims. Using a model with lower baseline hallucination rates makes the Critic's job easier and the overall pipeline more reliable.
 - **Temperature control**: The Analyst runs at temperature 0.1 (creative but grounded), while the Critic runs at 0.0 (maximum determinism for verification). The composite recommendation uses 0.1.
@@ -171,15 +171,18 @@ Create a `.env` file:
 
 ```bash
 ANTHROPIC_API_KEY=sk-ant-...
+LLM_MODEL=claude-sonnet-4-20250514
+SEC_USER_AGENT="Your Name your@email.com"
 QDRANT_HOST=localhost
 QDRANT_PORT=6333
-SEC_USER_AGENT="Your Name your@email.com"
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
 POSTGRES_DB=sec_alpha
 POSTGRES_USER=sec_alpha
 POSTGRES_PASSWORD=your_password
 ```
+
+`LLM_MODEL` defaults to `claude-sonnet-4-20250514` if omitted. Set it to any Anthropic model ID to swap models without changing code. See `.env.example` for a template.
 
 ### 3. Run Infrastructure (Docker Compose)
 
@@ -189,25 +192,47 @@ docker compose up -d
 
 This starts Qdrant (vector DB) and TimescaleDB (insider transaction storage).
 
+## How It's Intended to Be Used
+
+ETeam-Signal has **no GUI**. It exposes two interfaces:
+
+- **CLI** (`src/cli.py`) -- for data ingestion, ad-hoc searches, and one-off analysis runs from the terminal. Best for setup, debugging, and manual exploration.
+- **REST API** (`src/main.py`) -- for programmatic access. Designed to be called by dashboards, trading systems, scheduled jobs, or any HTTP client. Returns structured JSON suitable for downstream consumption.
+
+A typical workflow:
+
+1. **Ingest** filings for your universe of tickers via the CLI (one-time or scheduled).
+2. **Query** the REST API from your application to get on-demand Alpha Signal scores.
+3. **Monitor** insider trading continuously via the CLI's `insider monitor` command or schedule `insider scan` as a cron job.
+
 ## Usage
 
-### Ingest Data (CLI)
+### CLI Commands
 
-Download and index the latest 10-K for a ticker:
+**Ingest a filing into the vector store:**
 
 ```bash
 python src/cli.py ingest AAPL --limit 1
 ```
 
-### Search (CLI)
-
-Test the retrieval engine:
+**Search indexed filings:**
 
 ```bash
 python src/cli.py search "risk factors china"
 ```
 
-### Run API
+**Insider trading commands:**
+
+```bash
+python src/cli.py insider universe-refresh       # fetch S&P 500 ticker list
+python src/cli.py insider ingest --days-back 90  # ingest Form 4 data
+python src/cli.py insider analyze --ticker AAPL  # analyze one ticker
+python src/cli.py insider scan                   # full pipeline: ingest + analyze + alert
+python src/cli.py insider monitor                # continuous ATOM feed + batch polling
+python src/cli.py insider alerts                 # view active alerts
+```
+
+### REST API
 
 Start the server:
 
@@ -215,16 +240,26 @@ Start the server:
 uvicorn src.main:app --reload
 ```
 
-Then POST to `http://localhost:8000/api/v1/analyze/AAPL` to run the full pipeline (retrieve → analyze → critique).
-
-### API Endpoints
+**Endpoints:**
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `POST` | `/api/v1/analyze/{ticker}` | Full filing analysis pipeline |
+| `POST` | `/api/v1/analyze/{ticker}` | Full filing analysis pipeline (retrieve → analyze → critique) |
+| `POST` | `/api/v1/insider/ingest` | Trigger Form 4 ingestion |
+| `GET` | `/api/v1/insider/signal/{ticker}` | Composite alpha signal (filing + insider) |
+| `GET` | `/api/v1/insider/anomalies/{ticker}` | Anomalies for a ticker |
+| `GET` | `/api/v1/insider/anomalies` | All anomalies (filterable by score) |
+| `GET` | `/api/v1/insider/profile/{ticker}/{insider_name}` | Insider trading profile |
+| `GET` | `/api/v1/insider/alerts` | Active alerts |
 | `GET` | `/health` | Health check |
 
-Insider trading endpoints are mounted under `/api/v1` via the insider routes module.
+**Example:**
+
+```bash
+curl -X POST http://localhost:8000/api/v1/analyze/AAPL
+```
+
+Returns a JSON `AlphaSignal` with `signal_score`, `confidence`, `summary`, `risk_factors`, `key_quotes`, and `critic_notes`.
 
 ## Project Structure
 
@@ -266,7 +301,7 @@ tests/                # pytest suite mirroring src/ structure
 ## Tech Stack
 
 - **Language**: Python 3.10+
-- **LLM**: Anthropic Claude 3.5 Sonnet
+- **LLM**: Anthropic Claude Sonnet 4
 - **Embeddings**: sentence-transformers (`all-MiniLM-L6-v2`)
 - **Vector DB**: Qdrant
 - **Time-series DB**: TimescaleDB (PostgreSQL)
