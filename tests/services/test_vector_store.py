@@ -44,6 +44,20 @@ class TestVectorStore:
         mock_client = Mock()
         mock_client_cls.return_value = mock_client
         store = VectorStore()
-        
-        store.search(query_vector=[0.1, 0.1])
-        mock_client.search.assert_called_once()
+
+        mock_point = Mock()
+        mock_point.score = 0.9
+        mock_point.payload = {"ticker": "A"}
+        mock_response = Mock()
+        mock_response.points = [mock_point]
+        mock_client.query_points.return_value = mock_response
+
+        results = store.search(query_vector=[0.1, 0.1])
+
+        mock_client.query_points.assert_called_once_with(
+            collection_name=store.collection_name,
+            query=[0.1, 0.1],
+            limit=10,
+            with_payload=True,
+        )
+        assert results == [mock_point]
