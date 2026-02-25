@@ -13,11 +13,10 @@ pip-wheel-metadata/
 *.manifest
 *.spec
 
-# Virtual environments
+# Virtual environments (conda env "sec_alpha_env" lives in miniconda3/envs/, not here)
 .venv/
 venv/
 env/
-sec_venv/
 ENV/
 
 # Testing / Coverage

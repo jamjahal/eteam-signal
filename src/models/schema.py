@@ -1,6 +1,6 @@
 from typing import List, Optional, Dict, Literal
 from datetime import date, datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 import uuid
 
 class FilingChunk(BaseModel):
@@ -19,8 +19,7 @@ class FilingChunk(BaseModel):
     tokens: int = 0
     metadata: Dict[str, str] = Field(default_factory=dict)
 
-    class Config:
-        frozen = True
+    model_config = ConfigDict(frozen=True)
 
 class RetrievalResult(BaseModel):
     """
