@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     
     # LLM (Anthropic)
     ANTHROPIC_API_KEY: str = ""
-    LLM_MODEL: str = "claude-3-5-sonnet-20240620"
+    LLM_MODEL: str = "claude-sonnet-4-20250514"
     
     # SEC
     SEC_USER_AGENT: str = "SEC-Alpha-Sentinel jameshall@example.com"

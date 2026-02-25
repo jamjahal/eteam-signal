@@ -60,14 +60,15 @@ class VectorStore:
         )
         log.info("Upserted chunks", count=len(points))
 
-    def search(self, query_vector: List[float], limit: int = 10, 
+    def search(self, query_vector: List[float], limit: int = 10,
                filter_conditions: Optional[Dict] = None) -> List[models.ScoredPoint]:
         """
-        Perform dense vector search.
+        Perform dense vector search via query_points (qdrant-client >= 1.12).
         """
-        # TODO: Add filter construction logic if needed
-        return self.client.search(
+        response = self.client.query_points(
             collection_name=self.collection_name,
-            query_vector=query_vector,
-            limit=limit
+            query=query_vector,
+            limit=limit,
+            with_payload=True,
         )
+        return response.points
