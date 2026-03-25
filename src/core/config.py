@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     POSTGRES_POOL_MIN: int = 2
     POSTGRES_POOL_MAX: int = 10
 
+    # Rate-limit / token-budget management
+    MAX_CHUNK_CHARS: int = 3000          # truncate each retrieved chunk to this many characters
+    INTER_LLM_DELAY_SECONDS: float = 5.0 # pause between sequential LLM calls (Analyst → Critic)
+
     # Insider Trading Detection
     INSIDER_ANOMALY_THRESHOLD: float = 0.6
     INSIDER_LOOKBACK_DAYS: int = 730

@@ -2,9 +2,18 @@ import json
 from typing import List
 from src.services.llm_client import LLMClient
 from src.models.schema import AlphaSignal, RetrievalResult, FilingChunk
+from src.core.config import settings
 from src.core.logger import get_logger
 
 log = get_logger(__name__)
+
+
+def _truncate(text: str, max_chars: int) -> str:
+    """Truncate *text* to *max_chars*, appending an ellipsis marker if trimmed."""
+    if max_chars <= 0 or len(text) <= max_chars:
+        return text
+    return text[:max_chars] + "\n[…truncated]"
+
 
 class AnalystAgent:
     """
@@ -17,7 +26,11 @@ class AnalystAgent:
         """
         Synthesize chunks into a signal.
         """
-        context = "\n\n".join([f"--- SECTION: {c.section_name} ({c.filing_date}) ---\n{c.content}" for c in chunks])
+        max_chars = settings.MAX_CHUNK_CHARS
+        context = "\n\n".join([
+            f"--- SECTION: {c.section_name} ({c.filing_date}) ---\n{_truncate(c.content, max_chars)}"
+            for c in chunks
+        ])
         
         system_prompt = """
         You are a Senior Quantitative Analyst at a top-tier hedge fund.

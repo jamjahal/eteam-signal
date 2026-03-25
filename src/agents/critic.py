@@ -2,9 +2,18 @@ import json
 from typing import List, Tuple
 from src.services.llm_client import LLMClient
 from src.models.schema import AlphaSignal, FilingChunk
+from src.core.config import settings
 from src.core.logger import get_logger
 
 log = get_logger(__name__)
+
+
+def _truncate(text: str, max_chars: int) -> str:
+    """Truncate *text* to *max_chars*, appending an ellipsis marker if trimmed."""
+    if max_chars <= 0 or len(text) <= max_chars:
+        return text
+    return text[:max_chars] + "\n[…truncated]"
+
 
 class CriticAgent:
     """
@@ -17,7 +26,11 @@ class CriticAgent:
         """
         Returns (is_approved, critique_notes).
         """
-        context = "\n\n".join([f"--- SECTION: {c.section_name} ---\n{c.content}" for c in chunks])
+        max_chars = settings.MAX_CHUNK_CHARS
+        context = "\n\n".join([
+            f"--- SECTION: {c.section_name} ---\n{_truncate(c.content, max_chars)}"
+            for c in chunks
+        ])
         
         system_prompt = """
         You are a Compliance Officer and Risk Manager.
