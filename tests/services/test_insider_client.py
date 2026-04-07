@@ -1,6 +1,5 @@
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from datetime import date
 
 from src.services.insider_client import InsiderClient
 from src.models.insider_schema import TransactionCode

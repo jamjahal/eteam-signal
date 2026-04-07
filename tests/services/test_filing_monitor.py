@@ -1,6 +1,5 @@
 import pytest
 from unittest.mock import AsyncMock, Mock, patch
-from datetime import date
 
 from src.services.filing_monitor import FilingMonitor
 

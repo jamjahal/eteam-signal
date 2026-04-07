@@ -1,5 +1,5 @@
 from typing import List, Optional
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 import asyncpg
 
@@ -110,9 +110,7 @@ class InsiderStore:
             rows = await self.pool.fetch(query, ticker, cutoff)
         return [self._row_to_transaction(r) for r in rows]
 
-    async def get_recent_sellers(
-        self, ticker: str, window_days: int = 14
-    ) -> List[str]:
+    async def get_recent_sellers(self, ticker: str, window_days: int = 14) -> List[str]:
         """Return distinct insider names who sold within the given window."""
         cutoff = date.today() - timedelta(days=window_days)
         query = """
@@ -126,7 +124,9 @@ class InsiderStore:
     # Profiles (from continuous aggregate)
     # ------------------------------------------------------------------
 
-    async def get_profile(self, ticker: str, insider_name: str) -> Optional[InsiderProfile]:
+    async def get_profile(
+        self, ticker: str, insider_name: str
+    ) -> Optional[InsiderProfile]:
         """Build a profile from the continuous aggregate."""
         query = """
             SELECT
@@ -157,7 +157,9 @@ class InsiderStore:
         )
 
         total = int(row["total_transactions"])
-        span_days = (last_tx - first_tx).days if first_tx and last_tx and total > 1 else 0
+        span_days = (
+            (last_tx - first_tx).days if first_tx and last_tx and total > 1 else 0
+        )
         avg_freq = span_days / (total - 1) if total > 1 else 0.0
 
         return InsiderProfile(
@@ -238,10 +240,17 @@ class InsiderStore:
             RETURNING id
         """
         return await self.pool.fetchval(
-            query, ticker, anomaly_score, insider_sentiment, recommendation, composite_alpha_score
+            query,
+            ticker,
+            anomaly_score,
+            insider_sentiment,
+            recommendation,
+            composite_alpha_score,
         )
 
-    async def get_alerts(self, delivered: Optional[bool] = None, limit: int = 50) -> list:
+    async def get_alerts(
+        self, delivered: Optional[bool] = None, limit: int = 50
+    ) -> list:
         if delivered is not None:
             query = "SELECT * FROM insider_alerts WHERE delivered=$1 ORDER BY created_at DESC LIMIT $2"
             return await self.pool.fetch(query, delivered, limit)

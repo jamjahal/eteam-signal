@@ -38,6 +38,7 @@ async def ingest_form4(
 
     if not tickers:
         from src.services.universe import load_universe
+
         tickers = load_universe()
 
     txns = await client.batch_fetch(tickers, days_back=days_back)

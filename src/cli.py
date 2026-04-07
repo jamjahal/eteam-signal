@@ -1,5 +1,4 @@
 import asyncio
-from typing import Optional
 
 import typer
 from datetime import date
@@ -16,6 +15,7 @@ log = get_logger(__name__)
 # ======================================================================
 # Existing filing commands
 # ======================================================================
+
 
 @app.command()
 def ingest(ticker: str, form_type: str = "10-K", limit: int = 1):
@@ -42,7 +42,11 @@ def ingest(ticker: str, form_type: str = "10-K", limit: int = 1):
             return
 
         for filing in filings:
-            log.info("Downloading filing", date=filing.filing_date, accession=filing.accession_no)
+            log.info(
+                "Downloading filing",
+                date=filing.filing_date,
+                accession=filing.accession_no,
+            )
             html = client.download_html(filing)
 
             chunks = processor.process_html(
@@ -89,6 +93,7 @@ def search(query: str, limit: int = 5):
 # Insider trading commands
 # ======================================================================
 
+
 def _run(coro):
     """Helper to run an async coroutine from the sync Typer context."""
     asyncio.get_event_loop().run_until_complete(coro)
@@ -115,7 +120,9 @@ def insider_ingest(days_back: int = typer.Option(90, help="Days of history to fe
         try:
             tickers = load_universe()
             if not tickers:
-                log.error("No tickers in universe. Run 'insider universe-refresh' first.")
+                log.error(
+                    "No tickers in universe. Run 'insider universe-refresh' first."
+                )
                 raise typer.Exit(code=1)
 
             client = InsiderClient()
@@ -140,14 +147,16 @@ def insider_analyze(ticker: str = typer.Option(..., help="Ticker to analyze")):
         try:
             analyzer = InsiderAnalyzer(store)
             signal = await analyzer.analyze_ticker(ticker.upper())
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"  Insider Signal: {signal.ticker}")
             print(f"  Anomaly Score:  {signal.anomaly_score:.2f}")
             print(f"  Sentiment:      {signal.insider_sentiment.value}")
             print(f"  Anomalies:      {len(signal.anomalies)}")
             for a in signal.anomalies:
-                print(f"    [{a.anomaly_type.value}] {a.description} (severity {a.severity_score:.2f})")
-            print(f"{'='*60}\n")
+                print(
+                    f"    [{a.anomaly_type.value}] {a.description} (severity {a.severity_score:.2f})"
+                )
+            print(f"{'=' * 60}\n")
         finally:
             await store.close()
 
@@ -190,7 +199,9 @@ def insider_scan(days_back: int = typer.Option(90, help="Days of history to fetc
             alert_svc = AlertService(store)
             actionable = await alert_svc.evaluate(signals)
             for sig in actionable:
-                print(f"[ALERT] {sig.ticker}: score={sig.anomaly_score:.2f} sentiment={sig.insider_sentiment.value}")
+                print(
+                    f"[ALERT] {sig.ticker}: score={sig.anomaly_score:.2f} sentiment={sig.insider_sentiment.value}"
+                )
             if not actionable:
                 print("No actionable alerts.")
         finally:
@@ -273,12 +284,14 @@ def insider_universe_refresh():
 
     rows = []
     for _, row in df.iterrows():
-        rows.append({
-            "ticker": str(row.get("Symbol", "")).strip(),
-            "company_name": str(row.get("Security", "")).strip(),
-            "sector": str(row.get("GICS Sector", "")).strip(),
-            "sub_industry": str(row.get("GICS Sub-Industry", "")).strip(),
-        })
+        rows.append(
+            {
+                "ticker": str(row.get("Symbol", "")).strip(),
+                "company_name": str(row.get("Security", "")).strip(),
+                "sector": str(row.get("GICS Sector", "")).strip(),
+                "sub_industry": str(row.get("GICS Sub-Industry", "")).strip(),
+            }
+        )
 
     count = save_universe(rows)
     print(f"Saved {count} tickers to universe.")

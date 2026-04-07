@@ -1,5 +1,5 @@
 import uuid
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Optional
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from src.core.config import settings
@@ -8,19 +8,21 @@ from src.models.schema import FilingChunk
 
 log = get_logger(__name__)
 
+
 class VectorStore:
     """
     Wrapper around Qdrant for storing and retrieving SEC filing chunks.
     """
+
     def __init__(self):
         self.client = QdrantClient(
             host=settings.QDRANT_HOST,
             port=settings.QDRANT_PORT,
-            api_key=settings.QDRANT_API_KEY
+            api_key=settings.QDRANT_API_KEY,
         )
         self.collection_name = settings.QDRANT_COLLECTION_NAME
-        self.vector_size = 384 # Default for all-MiniLM-L6-v2
-        
+        self.vector_size = 384  # Default for all-MiniLM-L6-v2
+
         self._ensure_collection()
 
     def _ensure_collection(self):
@@ -34,9 +36,8 @@ class VectorStore:
             self.client.create_collection(
                 collection_name=self.collection_name,
                 vectors_config=models.VectorParams(
-                    size=self.vector_size,
-                    distance=models.Distance.COSINE
-                )
+                    size=self.vector_size, distance=models.Distance.COSINE
+                ),
             )
 
     def upsert_chunks(self, chunks: List[FilingChunk], embeddings: List[List[float]]):
@@ -48,20 +49,23 @@ class VectorStore:
 
         points = []
         for chunk, embedding in zip(chunks, embeddings):
-            points.append(models.PointStruct(
-                id=str(uuid.uuid4()), # or use chunk.id
-                vector=embedding,
-                payload=chunk.model_dump(mode='json')
-            ))
-            
-        self.client.upsert(
-            collection_name=self.collection_name,
-            points=points
-        )
+            points.append(
+                models.PointStruct(
+                    id=str(uuid.uuid4()),  # or use chunk.id
+                    vector=embedding,
+                    payload=chunk.model_dump(mode="json"),
+                )
+            )
+
+        self.client.upsert(collection_name=self.collection_name, points=points)
         log.info("Upserted chunks", count=len(points))
 
-    def search(self, query_vector: List[float], limit: int = 10,
-               filter_conditions: Optional[Dict] = None) -> List[models.ScoredPoint]:
+    def search(
+        self,
+        query_vector: List[float],
+        limit: int = 10,
+        filter_conditions: Optional[Dict] = None,
+    ) -> List[models.ScoredPoint]:
         """
         Perform dense vector search via query_points (qdrant-client >= 1.12).
         """

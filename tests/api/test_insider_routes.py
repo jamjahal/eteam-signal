@@ -1,10 +1,9 @@
 import pytest
-from unittest.mock import AsyncMock, patch, Mock
+from unittest.mock import AsyncMock
 from fastapi.testclient import TestClient
 
 from src.main import app
 from src.api.insider_routes import set_store
-from src.models.insider_schema import AnomalyType
 
 
 @pytest.fixture

@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class TransactionCode(str, Enum):
     """SEC Form 4 transaction codes."""
+
     PURCHASE = "P"
     SALE = "S"
     AWARD = "A"

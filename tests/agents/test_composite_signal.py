@@ -14,7 +14,9 @@ from src.models.insider_schema import (
 @pytest.fixture
 def mock_llm():
     llm = Mock()
-    llm.generate = AsyncMock(return_value="Strong sell signal. Insiders dumping shares while filings show risk.")
+    llm.generate = AsyncMock(
+        return_value="Strong sell signal. Insiders dumping shares while filings show risk."
+    )
     return llm
 
 

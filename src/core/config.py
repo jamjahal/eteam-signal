@@ -2,30 +2,34 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 from functools import lru_cache
 
+
 class Settings(BaseSettings):
     """
     Application configuration via Environment Variables.
     """
-    model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
+
+    model_config = SettingsConfigDict(
+        env_file=".env", case_sensitive=True, extra="ignore"
+    )
 
     # Project Info
     PROJECT_NAME: str = "SEC Alpha-Sentinel"
     VERSION: str = "0.1.0"
     DEBUG: bool = False
-    
+
     # Paths
     DATA_DIR: str = "./data"
-    
+
     # Vector DB (Qdrant)
     QDRANT_HOST: str = "localhost"
     QDRANT_PORT: int = 6333
     QDRANT_COLLECTION_NAME: str = "sec_filings"
     QDRANT_API_KEY: Optional[str] = None
-    
+
     # LLM (Anthropic)
     ANTHROPIC_API_KEY: str = ""
     LLM_MODEL: str = "claude-sonnet-4-20250514"
-    
+
     # SEC
     SEC_USER_AGENT: str = "SEC-Alpha-Sentinel jameshall@example.com"
 
@@ -39,8 +43,10 @@ class Settings(BaseSettings):
     POSTGRES_POOL_MAX: int = 10
 
     # Rate-limit / token-budget management
-    MAX_CHUNK_CHARS: int = 3000          # truncate each retrieved chunk to this many characters
-    INTER_LLM_DELAY_SECONDS: float = 5.0 # pause between sequential LLM calls (Analyst → Critic)
+    MAX_CHUNK_CHARS: int = 3000  # truncate each retrieved chunk to this many characters
+    INTER_LLM_DELAY_SECONDS: float = (
+        5.0  # pause between sequential LLM calls (Analyst → Critic)
+    )
 
     # Insider Trading Detection
     INSIDER_ANOMALY_THRESHOLD: float = 0.6
@@ -59,8 +65,10 @@ class Settings(BaseSettings):
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 
+
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
 
 settings = get_settings()

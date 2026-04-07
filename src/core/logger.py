@@ -1,7 +1,8 @@
 import sys
 import logging
 import structlog
-from typing import Any, Dict
+from typing import Any
+
 
 def configure_logger(log_level: str = "INFO") -> None:
     """
@@ -20,7 +21,8 @@ def configure_logger(log_level: str = "INFO") -> None:
     ]
 
     structlog.configure(
-        processors=shared_processors + [
+        processors=shared_processors
+        + [
             structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
         ],
         logger_factory=structlog.stdlib.LoggerFactory(),
@@ -40,7 +42,7 @@ def configure_logger(log_level: str = "INFO") -> None:
     # Use standard library logging configuration
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(formatter)
-    
+
     root_logger = logging.getLogger()
     root_logger.addHandler(handler)
     root_logger.setLevel(log_level.upper())
@@ -48,6 +50,7 @@ def configure_logger(log_level: str = "INFO") -> None:
     # Quiet down some libraries
     logging.getLogger("uvicorn.access").setLevel("WARNING")
     logging.getLogger("urllib3").setLevel("WARNING")
+
 
 def get_logger(name: str) -> structlog.stdlib.BoundLogger:
     return structlog.get_logger(name)

@@ -1,9 +1,8 @@
-import json
 from typing import Optional
 
 from src.core.logger import get_logger
 from src.models.schema import AlphaSignal
-from src.models.insider_schema import InsiderSignal, InsiderSentiment
+from src.models.insider_schema import InsiderSignal
 from src.services.llm_client import LLMClient
 
 log = get_logger(__name__)
@@ -67,10 +66,13 @@ class CompositeSignalEngine:
                 f"Summary: {filing_signal.summary}"
             )
 
-        anomaly_descriptions = "\n".join(
-            f"- [{a.anomaly_type.value}] {a.description} (severity {a.severity_score:.2f})"
-            for a in insider_signal.anomalies
-        ) or "No anomalies detected."
+        anomaly_descriptions = (
+            "\n".join(
+                f"- [{a.anomaly_type.value}] {a.description} (severity {a.severity_score:.2f})"
+                for a in insider_signal.anomalies
+            )
+            or "No anomalies detected."
+        )
 
         system_prompt = (
             "You are a senior quantitative analyst. Produce a concise recommendation "

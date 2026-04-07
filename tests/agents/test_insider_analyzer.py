@@ -1,8 +1,8 @@
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 from datetime import date, timedelta
 
-from src.agents.insider_analyzer import InsiderAnalyzer, VOLUME_Z_THRESHOLD
+from src.agents.insider_analyzer import InsiderAnalyzer
 from src.models.insider_schema import (
     AnomalyType,
     InsiderProfile,
@@ -66,14 +66,18 @@ class TestTier1VolumeAnomaly:
         profile = _make_profile()
 
         anomalies = analyzer._tier1_detect(txns, profile, "AAPL")
-        volume_anomalies = [a for a in anomalies if a.anomaly_type == AnomalyType.VOLUME]
+        volume_anomalies = [
+            a for a in anomalies if a.anomaly_type == AnomalyType.VOLUME
+        ]
         assert len(volume_anomalies) >= 1
 
     def test_no_volume_anomaly_for_normal_trades(self, analyzer):
         txns = [_make_tx(days_ago=i * 30, shares=1000, price=150.0) for i in range(5)]
         profile = _make_profile()
         anomalies = analyzer._tier1_detect(txns, profile, "AAPL")
-        volume_anomalies = [a for a in anomalies if a.anomaly_type == AnomalyType.VOLUME]
+        volume_anomalies = [
+            a for a in anomalies if a.anomaly_type == AnomalyType.VOLUME
+        ]
         assert len(volume_anomalies) == 0
 
 
@@ -82,7 +86,9 @@ class TestTier1HoldingsPercentage:
         tx = _make_tx(shares=40000, shares_owned_after=10000)
         profile = _make_profile()
         anomalies = analyzer._tier1_detect([tx], profile, "AAPL")
-        pct_anomalies = [a for a in anomalies if a.anomaly_type == AnomalyType.HOLDINGS_PERCENTAGE]
+        pct_anomalies = [
+            a for a in anomalies if a.anomaly_type == AnomalyType.HOLDINGS_PERCENTAGE
+        ]
         assert len(pct_anomalies) == 1
         assert pct_anomalies[0].severity_score == pytest.approx(0.8, abs=0.01)
 
@@ -104,7 +110,10 @@ class TestClusterSelling:
 
 class TestTier2IsolationForest:
     def test_with_sufficient_data(self, analyzer):
-        txns = [_make_tx(days_ago=i * 15, shares=1000 + i * 100, price=150.0) for i in range(15)]
+        txns = [
+            _make_tx(days_ago=i * 15, shares=1000 + i * 100, price=150.0)
+            for i in range(15)
+        ]
         score = analyzer._tier2_score(txns)
         assert 0.0 <= score <= 1.0
 

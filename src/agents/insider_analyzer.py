@@ -1,9 +1,7 @@
 from typing import List, Optional
-from datetime import date, timedelta
-import math
+from datetime import date
 
 import numpy as np
-from scipy import stats
 from sklearn.ensemble import IsolationForest
 
 from src.core.config import settings
@@ -51,7 +49,9 @@ class InsiderAnalyzer:
 
     async def analyze_ticker(self, ticker: str) -> InsiderSignal:
         """Run full anomaly analysis for a single ticker."""
-        txns = await self.store.get_transactions(ticker, days_back=settings.INSIDER_LOOKBACK_DAYS)
+        txns = await self.store.get_transactions(
+            ticker, days_back=settings.INSIDER_LOOKBACK_DAYS
+        )
         if not txns:
             return InsiderSignal(ticker=ticker)
 
@@ -149,7 +149,10 @@ class InsiderAnalyzer:
                     )
 
         # Holdings percentage anomaly
-        if latest.transaction_code == TransactionCode.SALE and latest.shares_owned_after:
+        if (
+            latest.transaction_code == TransactionCode.SALE
+            and latest.shares_owned_after
+        ):
             total_before = latest.shares + latest.shares_owned_after
             if total_before > 0:
                 pct_sold = latest.shares / total_before
@@ -203,7 +206,11 @@ class InsiderAnalyzer:
         )
         model.fit(features)
 
-        latest_features = features[-1:].reshape(1, -1) if features.ndim > 1 else features[-1:].reshape(1, -1)
+        latest_features = (
+            features[-1:].reshape(1, -1)
+            if features.ndim > 1
+            else features[-1:].reshape(1, -1)
+        )
         raw = model.decision_function(latest_features)[0]
         # decision_function returns negative for anomalies; map to 0..1
         return float(np.clip(1.0 - (raw + 0.5), 0.0, 1.0))
@@ -257,7 +264,9 @@ class InsiderAnalyzer:
                 role_weight = max(role_weight, ROLE_WEIGHTS["officer"])
 
         # 10b5-1 discount
-        planned_ratio = sum(1 for tx in txns[:10] if tx.is_10b5_1) / max(len(txns[:10]), 1)
+        planned_ratio = sum(1 for tx in txns[:10] if tx.is_10b5_1) / max(
+            len(txns[:10]), 1
+        )
         planned_discount = 1.0 - (planned_ratio * (1.0 - PLANNED_TRADE_DISCOUNT))
 
         return float(np.clip(base * role_weight * planned_discount, 0.0, 1.0))

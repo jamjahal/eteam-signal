@@ -1,8 +1,8 @@
-from typing import List, Optional
+from typing import List
 
 from src.core.config import settings
 from src.core.logger import get_logger
-from src.models.insider_schema import InsiderSignal, InsiderSentiment
+from src.models.insider_schema import InsiderSignal
 from src.services.insider_store import InsiderStore
 
 log = get_logger(__name__)

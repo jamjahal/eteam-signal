@@ -154,11 +154,15 @@ class FilingMonitor:
         """Fetch Form 4 filings for the full universe with overlapping window."""
         overlap_days = max(1, settings.INSIDER_BATCH_OVERLAP_HOURS // 24 + 1)
         tickers = sorted(self.universe)
-        log.info("Starting batch sweep", tickers=len(tickers), overlap_days=overlap_days)
+        log.info(
+            "Starting batch sweep", tickers=len(tickers), overlap_days=overlap_days
+        )
 
         txns = await self.client.batch_fetch(tickers, days_back=overlap_days)
         inserted = await self.store.upsert_transactions(txns)
-        log.info("Batch sweep complete", new_transactions=inserted, total_fetched=len(txns))
+        log.info(
+            "Batch sweep complete", new_transactions=inserted, total_fetched=len(txns)
+        )
 
         if inserted > 0 and self.on_new_filings:
             await self.on_new_filings(txns[:inserted])

@@ -56,22 +56,33 @@ class InsiderClient:
         except Exception:
             pass
 
-        filing_date_val = self._coerce_date(getattr(filing, "filing_date", None)) or date.today()
+        filing_date_val = (
+            self._coerce_date(getattr(filing, "filing_date", None)) or date.today()
+        )
 
         raw_txns = []
         if hasattr(form4, "transactions") and form4.transactions:
-            raw_txns = form4.transactions if isinstance(form4.transactions, list) else [form4.transactions]
+            raw_txns = (
+                form4.transactions
+                if isinstance(form4.transactions, list)
+                else [form4.transactions]
+            )
 
         for raw in raw_txns:
             try:
-                tx_date = self._coerce_date(getattr(raw, "transaction_date", None)) or filing_date_val
+                tx_date = (
+                    self._coerce_date(getattr(raw, "transaction_date", None))
+                    or filing_date_val
+                )
                 raw_code = str(getattr(raw, "transaction_code", "O")).strip().upper()
                 tx_code = _CODE_MAP.get(raw_code, TransactionCode.OTHER)
 
                 shares = float(getattr(raw, "shares", 0) or 0)
                 price = self._safe_float(getattr(raw, "price_per_share", None))
                 total_value = shares * price if price else None
-                owned_after = self._safe_float(getattr(raw, "shares_owned_following_transaction", None))
+                owned_after = self._safe_float(
+                    getattr(raw, "shares_owned_following_transaction", None)
+                )
                 is_planned = bool(getattr(raw, "is_10b5_1", False))
 
                 transactions.append(
@@ -115,7 +126,9 @@ class InsiderClient:
                         all_txns.append(tx)
             await asyncio.sleep(self._rate_delay)
 
-        log.info("Batch fetch complete", tickers=len(tickers), transactions=len(all_txns))
+        log.info(
+            "Batch fetch complete", tickers=len(tickers), transactions=len(all_txns)
+        )
         return all_txns
 
     # ------------------------------------------------------------------

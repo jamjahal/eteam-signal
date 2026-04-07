@@ -19,19 +19,24 @@ class CriticAgent:
     """
     Reviews the Analyst's output for hallucinations or weak evidence.
     """
+
     def __init__(self, llm_client: LLMClient):
         self.llm = llm_client
 
-    async def critique(self, signal: AlphaSignal, chunks: List[FilingChunk]) -> Tuple[bool, str]:
+    async def critique(
+        self, signal: AlphaSignal, chunks: List[FilingChunk]
+    ) -> Tuple[bool, str]:
         """
         Returns (is_approved, critique_notes).
         """
         max_chars = settings.MAX_CHUNK_CHARS
-        context = "\n\n".join([
-            f"--- SECTION: {c.section_name} ---\n{_truncate(c.content, max_chars)}"
-            for c in chunks
-        ])
-        
+        context = "\n\n".join(
+            [
+                f"--- SECTION: {c.section_name} ---\n{_truncate(c.content, max_chars)}"
+                for c in chunks
+            ]
+        )
+
         system_prompt = """
         You are a Compliance Officer and Risk Manager.
         Your job is to verify the Analyst's report against the source text.
@@ -47,7 +52,7 @@ class CriticAgent:
             "critique": "string explanation"
         }
         """
-        
+
         user_prompt = f"""
         Source Text:
         {context}
@@ -57,13 +62,17 @@ class CriticAgent:
         Summary: {signal.summary}
         Quotes: {signal.key_quotes}
         """
-        
-        response_text = await self.llm.generate(system_prompt, user_prompt, temperature=0.0)
-        
+
+        response_text = await self.llm.generate(
+            system_prompt, user_prompt, temperature=0.0
+        )
+
         try:
             cleaned = response_text.replace("```json", "").replace("```", "").strip()
             data = json.loads(cleaned)
-            return data.get("approved", False), data.get("critique", "No critique provided.")
+            return data.get("approved", False), data.get(
+                "critique", "No critique provided."
+            )
         except Exception as e:
             log.error("Failed to parse Critic output", error=str(e))
             return False, "Critic parsing failed."

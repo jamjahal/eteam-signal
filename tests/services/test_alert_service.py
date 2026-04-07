@@ -22,7 +22,11 @@ class TestEvaluate:
     async def test_filters_below_threshold(self, service, store):
         signals = [
             InsiderSignal(ticker="AAPL", anomaly_score=0.3),
-            InsiderSignal(ticker="GOOG", anomaly_score=0.8, insider_sentiment=InsiderSentiment.BEARISH),
+            InsiderSignal(
+                ticker="GOOG",
+                anomaly_score=0.8,
+                insider_sentiment=InsiderSentiment.BEARISH,
+            ),
         ]
         actionable = await service.evaluate(signals)
         assert len(actionable) == 1

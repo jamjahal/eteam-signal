@@ -1,6 +1,5 @@
 import asyncio
 import anthropic
-from typing import Optional, List, Dict, Any
 from src.core.config import settings
 from src.core.logger import get_logger
 
@@ -20,6 +19,7 @@ class LLMClient:
     Automatically retries on 429 (rate-limit) responses using exponential
     backoff so that callers don't have to handle throttling themselves.
     """
+
     def __init__(
         self,
         max_retries: int = _DEFAULT_MAX_RETRIES,
@@ -39,7 +39,9 @@ class LLMClient:
         self.backoff_multiplier = backoff_multiplier
         self.max_backoff = max_backoff
 
-    async def generate(self, system_prompt: str, user_prompt: str, temperature: float = 0.0) -> str:
+    async def generate(
+        self, system_prompt: str, user_prompt: str, temperature: float = 0.0
+    ) -> str:
         """
         Simple generation call with automatic retry on 429 rate-limit errors.
 
@@ -57,9 +59,7 @@ class LLMClient:
                     max_tokens=4096,
                     temperature=temperature,
                     system=system_prompt,
-                    messages=[
-                        {"role": "user", "content": user_prompt}
-                    ]
+                    messages=[{"role": "user", "content": user_prompt}],
                 )
                 return message.content[0].text
 

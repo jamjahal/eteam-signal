@@ -6,7 +6,7 @@ and live in a separate test_insider_store_integration.py.
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 from datetime import date
 
 from src.services.insider_store import InsiderStore

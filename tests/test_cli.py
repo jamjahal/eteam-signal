@@ -1,4 +1,3 @@
-import sys
 from unittest.mock import patch, MagicMock
 
 from typer.testing import CliRunner
@@ -23,9 +22,11 @@ def test_ingest_command():
 
     mock_retriever_cls = MagicMock()
 
-    with patch("src.services.sec_client.SECClient", mock_sec_cls), \
-         patch("src.services.processor.FilingProcessor", mock_processor_cls), \
-         patch("src.services.retriever.Retriever", mock_retriever_cls):
+    with (
+        patch("src.services.sec_client.SECClient", mock_sec_cls),
+        patch("src.services.processor.FilingProcessor", mock_processor_cls),
+        patch("src.services.retriever.Retriever", mock_retriever_cls),
+    ):
         result = runner.invoke(app, ["ingest", "AAPL"])
 
         if result.exit_code != 0:
